@@ -12,7 +12,7 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Tabloları oluştur
+    # 1. Orders Tablosu
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id TEXT PRIMARY KEY,
@@ -24,6 +24,7 @@ def init_db():
         )
     """)
     
+    # 2. Stock Tablosu
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS stock (
             product TEXT PRIMARY KEY,
@@ -34,6 +35,7 @@ def init_db():
         )
     """)
     
+    # 3. Cargo Tablosu
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS cargo (
             code TEXT PRIMARY KEY,
@@ -42,6 +44,18 @@ def init_db():
             estimated_delivery TEXT,
             delayed INTEGER,
             last_location TEXT
+        )
+    """)
+
+    # 4. Decisions Tablosu 
+    # AI'nın önerdiği kararları saklamak için
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            description TEXT NOT NULL,
+            action TEXT NOT NULL,
+            approved BOOLEAN DEFAULT FALSE,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
@@ -78,3 +92,33 @@ def init_db():
     conn.commit()
     conn.close()
     print("Veritabanı hazır.")
+
+# --- YARDIMCI FONKSİYONLAR ---
+
+def save_decision(description, action, approved):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO decisions (description, action, approved) VALUES (?, ?, ?)',
+                   (description, action, approved))
+    conn.commit()
+    conn.close()
+
+def get_past_decisions():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM decisions ORDER BY timestamp DESC')
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+# main.py içindeki stok çekme işlevleri için
+def get_stock():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM stock")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+if __name__ == "__main__":
+    init_db()

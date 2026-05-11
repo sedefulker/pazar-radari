@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Sun, Moon, Package, BarChart2, AlertTriangle, MessageSquare, TrendingUp, ChevronRight, CheckCircle, Clock, Truck } from 'lucide-react';
+import { Sun, Moon, Package, BarChart2, AlertTriangle, MessageSquare, TrendingUp, ChevronRight, CheckCircle, Clock, Truck, Search } from 'lucide-react';
 
 const API = 'http://127.0.0.1:8000';
 
@@ -14,6 +14,12 @@ export default function App() {
   const [chat, setChat] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // PAZAR ANALİZİ İÇİN YENİ STATE'LER
+  const [productToAnalyze, setProductToAnalyze] = useState('');
+  const [analysisResult, setAnalysisResult] = useState('');
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+
   const chatEndRef = useRef(null);
 
   const t = {
@@ -40,6 +46,20 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chat]);
 
+  // PAZAR ANALİZİ FONKSİYONU
+  const handleMarketAnalysis = async () => {
+    if (!productToAnalyze.trim()) return;
+    setAnalysisLoading(true);
+    setAnalysisResult("");
+    try {
+      const res = await axios.post(`${API}/market/campaign`, { product: productToAnalyze });
+      setAnalysisResult(res.data.suggestion);
+    } catch {
+      setAnalysisResult("Analiz alınırken bir hata oluştu.");
+    }
+    setAnalysisLoading(false);
+  };
+
   const sendMessage = async () => {
     if (!message.trim() || loading) return;
     setLoading(true);
@@ -62,6 +82,7 @@ export default function App() {
     { id: 'dashboard', icon: BarChart2, label: 'Dashboard' },
     { id: 'orders', icon: Package, label: 'Siparişler' },
     { id: 'stock', icon: TrendingUp, label: 'Stok' },
+    { id: 'market', icon: Search, label: 'Pazar Analizi' }, // BURASI EKLENDİ
     { id: 'alerts', icon: AlertTriangle, label: 'Uyarılar' },
     { id: 'chat', icon: MessageSquare, label: 'AI Asistan' },
   ];
@@ -238,6 +259,38 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* PAZAR ANALİZİ SEKMESİ (YENİ) */}
+        {activeTab === 'market' && (
+          <div>
+            <div style={{ marginBottom: '28px' }}>
+              <h1 style={{ margin: '0 0 4px', fontSize: '22px', fontWeight: '700' }}>Pazar Analizi</h1>
+              <p style={{ margin: 0, color: t.muted, fontSize: '14px' }}>AI ile trend ve rakip analizi yapın</p>
+            </div>
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '24px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                <input 
+                  value={productToAnalyze} 
+                  onChange={e => setProductToAnalyze(e.target.value)} 
+                  placeholder="Ürün adı giriniz..." 
+                  style={{ flex: 1, padding: '10px 16px', borderRadius: '8px', background: t.input, border: `1px solid ${t.border}`, color: t.text, outline: 'none' }} 
+                />
+                <button 
+                  onClick={handleMarketAnalysis} 
+                  disabled={analysisLoading}
+                  style={{ padding: '10px 20px', background: t.accent, color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  {analysisLoading ? 'Analiz Ediliyor...' : 'Analiz Et'}
+                </button>
+              </div>
+              {analysisResult && (
+                <div style={{ background: t.hover, padding: '20px', borderRadius: '12px', border: `1px solid ${t.border}`, lineHeight: '1.6', fontSize: '14px', whiteSpace: 'pre-wrap' }}>
+                  {analysisResult}
+                </div>
+              )}
             </div>
           </div>
         )}

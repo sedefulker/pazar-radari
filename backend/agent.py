@@ -75,11 +75,12 @@ def call_gemini(prompt: str, use_search: bool = False) -> str:
         ]
     }
 
+    
     # Search Grounding
     if use_search:
         payload["tools"] = [
             {
-                "google_search_retrieval": {}
+                "google_search": {} 
             }
         ]
 
@@ -282,6 +283,25 @@ Kurallar:
     # Search Grounding burada aktif
     return call_gemini(prompt, use_search=True)
 
+
+# MARKET CAMPAIGN SUGGESTION 
+
+def get_market_campaign_suggestion(product: str, stock_quantity: int) -> str:
+    prompt = f"""
+Sen bir KOBİ pazarlama uzmanısın. 
+Ürün: {product}
+Mevcut Stok: {stock_quantity}
+
+Görev:
+Bu ürün için internet trendlerine ve stok durumuna göre kısa bir kampanya stratejisi öner.
+
+Kurallar:
+- İnternet verilerini kullan (Search Grounding aktif olacak)
+- Türkçe yaz
+- Kısa ve net maddeler kullan
+"""
+    # Mevcut call_gemini fonksiyonunu search özelliği ile çağırıyoruz
+    return call_gemini(prompt, use_search=True)
 
 # DAILY SUMMARY
 
