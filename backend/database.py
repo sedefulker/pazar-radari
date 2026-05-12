@@ -1,124 +1,104 @@
-import sqlite3
-import json
-from datetime import datetime, timedelta
-import random
+import os
+from supabase import create_client, Client
+from dotenv import load_dotenv
 
-def get_connection():
-    conn = sqlite3.connect("pazar_radari.db")
-    conn.row_factory = sqlite3.Row
-    return conn
+load_dotenv()
 
-def init_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    # 1. Orders Tablosu
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            id TEXT PRIMARY KEY,
-            customer TEXT,
-            product TEXT,
-            status TEXT,
-            cargo_code TEXT,
-            created_at TEXT
-        )
-    """)
-    
-    # 2. Stock Tablosu
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS stock (
-            product TEXT PRIMARY KEY,
-            unit TEXT,
-            quantity INTEGER,
-            threshold INTEGER,
-            supplier_email TEXT
-        )
-    """)
-    
-    # 3. Cargo Tablosu
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS cargo (
-            code TEXT PRIMARY KEY,
-            order_id TEXT,
-            status TEXT,
-            estimated_delivery TEXT,
-            delayed INTEGER,
-            last_location TEXT
-        )
-    """)
+# Bulut bağlantı konfigürasyonu
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-    # 4. Decisions Tablosu 
-    # AI'nın önerdiği kararları saklamak için
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS decisions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            description TEXT NOT NULL,
-            action TEXT NOT NULL,
-            approved BOOLEAN DEFAULT FALSE,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+# ── SİPARİŞ YÖNETİMİ ──
 
-    # Mock veri ekle
-    cursor.execute("SELECT COUNT(*) FROM orders")
-    if cursor.fetchone()[0] == 0:
-        orders = [
-            ("ORD001", "Ahmet Yılmaz", "Zeytinyağı 5L", "beklemede", "KARGO001", "2026-05-08"),
-            ("ORD002", "Fatma Demir", "Doğal Sabun", "kargoda", "KARGO002", "2026-05-07"),
-            ("ORD003", "Mehmet Kaya", "Çanta Deri", "teslim edildi", "KARGO003", "2026-05-06"),
-            ("ORD004", "Ayşe Çelik", "Zeytinyağı 1L", "beklemede", "KARGO004", "2026-05-09"),
-            ("ORD005", "Ali Şahin", "Organik Bal", "kargoda", "KARGO005", "2026-05-08"),
+def get_orders():
+    """Siparişleri ilişkili ürün isimleriyle birlikte çeker."""
+    try:
+        response = supabase.table("orders").select("*, products(name)").execute()
+        return response.data
+    except Exception as e:
+        print(f"Sipariş çekme hatası: {e}")
+        return []
+
+# ── STOK VE ENVANTER ──
+
+def get_stock():
+    """Tüm ürün envanterini buluttan getirir."""
+    try:
+        response = supabase.table("products").select("*").execute()
+        return response.data
+    except Exception as e:
+        print(f"Stok çekme hatası: {e}")
+        return []
+
+def get_critical_stock():
+    """
+    Kritik eşik altındaki ürünleri süzerek getirir.
+    NOT: Supabase 'lte' filtresinde iki kolonu kıyaslarken hata verebildiği için 
+    işlemi Python tarafında güvenli bir şekilde yapıyoruz.
+    """
+    try:
+        response = supabase.table('products').select('*').execute()
+        all_products = response.data
+        
+        # stock_quantity <= critical_threshold olanları süzüyoruz
+        critical_products = [
+            p for p in all_products 
+            if float(p.get('stock_quantity', 0)) <= float(p.get('critical_threshold', 10))
         ]
-        cursor.executemany("INSERT INTO orders VALUES (?,?,?,?,?,?)", orders)
+        return critical_products
+    except Exception as e:
+        print(f"Kritik stok süzme hatası: {e}")
+        return []
 
-        stock = [
-            ("Zeytinyağı 5L", "adet", 8, 10, "tedarikci@zeytinfarm.com"),
-            ("Doğal Sabun", "adet", 45, 15, "tedarikci@sabun.com"),
-            ("Çanta Deri", "adet", 3, 5, "tedarikci@dericanta.com"),
-            ("Zeytinyağı 1L", "adet", 12, 10, "tedarikci@zeytinfarm.com"),
-            ("Organik Bal", "kg", 6, 8, "tedarikci@bal.com"),
-        ]
-        cursor.executemany("INSERT INTO stock VALUES (?,?,?,?,?)", stock)
+# ── LOJİSTİK RADARI ──
 
-        cargo = [
-            ("KARGO001", "ORD001", "depoda", "2026-05-12", 0, "İstanbul Depo"),
-            ("KARGO002", "ORD002", "yolda", "2026-05-10", 1, "Ankara Şube"),
-            ("KARGO003", "ORD003", "teslim edildi", "2026-05-09", 0, "Teslim Noktası"),
-            ("KARGO004", "ORD004", "depoda", "2026-05-13", 0, "İstanbul Depo"),
-            ("KARGO005", "ORD005", "yolda", "2026-05-11", 1, "İzmir Şube"),
-        ]
-        cursor.executemany("INSERT INTO cargo VALUES (?,?,?,?,?,?)", cargo)
+def get_delayed_cargo():
+    """Anomali tespiti yapılmış (geciken) kargoları filtreler."""
+    try:
+        response = supabase.table("logistics_radar").select("*")\
+            .eq("is_anomaly", True).execute()
+        return response.data
+    except Exception as e:
+        print(f"Lojistik veri hatası: {e}")
+        return []
 
-    conn.commit()
-    conn.close()
-    print("Veritabanı hazır.")
+# ── AI KARAR HAFIZASI ──
 
-# --- YARDIMCI FONKSİYONLAR ---
-
-def save_decision(description, action, approved):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO decisions (description, action, approved) VALUES (?, ?, ?)',
-                   (description, action, approved))
-    conn.commit()
-    conn.close()
+def save_decision(description, action, approved=False, product_id=None):
+    """Ajanın aldığı stratejik kararları onay durumuyla birlikte kaydeder."""
+    data = {
+        "incident_type": description,
+        "proposed_action": action,
+        "is_approved": approved,
+        "related_product_id": product_id
+    }
+    return supabase.table("ai_decisions").insert(data).execute()
 
 def get_past_decisions():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM decisions ORDER BY timestamp DESC')
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    """Karar hafızasını kronolojik olarak getirir."""
+    try:
+        response = supabase.table("ai_decisions").select("*")\
+            .order("created_at", desc=True).limit(20).execute()
+        return response.data
+    except Exception as e:
+        print(f"Karar hafızası hatası: {e}")
+        return []
 
-# main.py içindeki stok çekme işlevleri için
-def get_stock():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM stock")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+# --- BİLDİRİM SİSTEMİ ---
 
-if __name__ == "__main__":
-    init_db()
+def create_notification(title, message, notification_type="warning"):
+    """
+    Dashboard ve Telegram için proaktif bildirim oluşturur.
+    Parametre ismini 'notification_type' yaparak agent.py ile uyumlu hale getirdik.
+    """
+    try:
+        data = {
+            "title": title, 
+            "message": message, 
+            "notification_type": notification_type
+        }
+        return supabase.table("notifications").insert(data).execute()
+    except Exception as e:
+        print(f"Bildirim oluşturma hatası: {e}")
+        return None

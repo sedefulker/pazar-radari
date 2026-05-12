@@ -1,7 +1,8 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
 requests
 apscheduler
 python-telegram-bot
 google-generativeai
+supabase
