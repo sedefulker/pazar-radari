@@ -1,64 +1,102 @@
 import React from 'react';
 import { useTheme } from '../App';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
-export default function StatCard({ label, value, color, sub, trend }) {
-  const { t } = useTheme();
+export default function StatCard({ label, value, sub, trend, color }) {
+  const { t, mode } = useTheme();
+
+  const isPositive = trend?.startsWith('+');
 
   return (
-    <div style={{ 
-      background: t.card, 
-      border: `1px solid ${t.border}`, 
-      borderRadius: '12px', 
-      padding: '20px 22px', 
-      boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
-      flex: 1
+    <div style={{
+      background: t.card,
+      border: `1px solid ${t.border}`,
+      borderRadius: '24px',
+      padding: '24px',
+      minHeight: '160px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'transform 0.3s ease, border-color 0.3s ease',
+      cursor: 'default'
     }}>
-      <div style={{ 
-        fontSize: '11px', 
-        fontWeight: '600', 
-        color: t.textMuted, 
-        textTransform: 'uppercase', 
-        letterSpacing: '0.06em', 
-        marginBottom: '10px' 
-      }}>
-        {label}
-      </div>
-
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'baseline', 
-        gap: '8px' 
-      }}>
-        <div style={{ 
-          fontSize: '28px', 
-          fontWeight: '700', 
-          color: color || t.text, 
-          letterSpacing: '-1px' 
+      <div>
+        <div style={{
+          fontSize: '11px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: t.textMuted,
+          fontWeight: 800,
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
         }}>
-          {value}
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: t.accentSecondary }} />
+          {label}
         </div>
-        
-        {trend && (
-          <span style={{ 
-            fontSize: '12px', 
-            fontWeight: '600', 
-            color: trend.startsWith('+') ? t.success : t.danger 
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: '12px'
+        }}>
+          <div style={{
+            fontSize: '36px',
+            fontWeight: 800,
+            letterSpacing: '-1.5px',
+            color: color || t.accent,
+            lineHeight: '1'
           }}>
-            {trend}
-          </span>
-        )}
+            {value}
+          </div>
+
+          {trend && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '4px 8px',
+              borderRadius: '8px',
+              background: isPositive ? 'rgba(0, 220, 130, 0.1)' : 'rgba(255, 51, 51, 0.1)',
+              color: isPositive ? t.success : t.danger,
+              fontSize: '12px',
+              fontWeight: 700,
+              border: `1px solid ${isPositive ? 'rgba(0, 220, 130, 0.1)' : 'rgba(255, 51, 51, 0.1)'}`
+            }}>
+              {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+              {trend}
+            </div>
+          )}
+        </div>
       </div>
 
       {sub && (
-        <div style={{ 
-          fontSize: '12px', 
-          color: t.textMuted, 
-          marginTop: '8px',
-          fontWeight: '400' 
+        <div style={{
+          fontSize: '13px',
+          color: t.textSecondary,
+          fontWeight: 500,
+          marginTop: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
         }}>
+          <div style={{ opacity: 0.5 }}>•</div>
           {sub}
         </div>
       )}
+      
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: '60px',
+        height: '60px',
+        background: `radial-gradient(circle at top right, ${t.accentSoft}, transparent 70%)`,
+        opacity: 0.5
+      }} />
     </div>
   );
 }

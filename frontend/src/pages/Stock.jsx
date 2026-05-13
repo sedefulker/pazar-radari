@@ -1,35 +1,86 @@
 import React from 'react';
 import { useTheme } from '../App';
+import { Boxes, AlertTriangle, BarChart, CheckCircle2, Info, Package } from 'lucide-react';
 
 export default function Stock({ stock }) {
   const { t } = useTheme();
 
+  const criticalCount = stock.filter(s => Number(s.stock_quantity) <= Number(s.critical_threshold)).length;
+
+  const getStatusBadge = (isCritical) => (
+    <div style={{ 
+      display: 'inline-flex', 
+      alignItems: 'center', 
+      gap: '6px',
+      padding: '4px 12px',
+      borderRadius: '8px',
+      fontSize: '11px',
+      fontWeight: 800,
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px',
+      background: isCritical ? 'rgba(255, 51, 51, 0.1)' : 'rgba(0, 220, 130, 0.1)',
+      color: isCritical ? t.danger : t.success,
+      border: `1px solid ${isCritical ? 'rgba(255, 51, 51, 0.1)' : 'rgba(0, 220, 130, 0.1)'}`
+    }}>
+      {isCritical ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}
+      {isCritical ? 'Kritik' : 'Normal'}
+    </div>
+  );
+
   return (
-    <div>
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: '600', margin: '0 0 4px', color: t.text }}>Stok & Envanter Yönetimi</h1>
-        <p style={{ fontSize: '13px', color: t.textSecondary, margin: 0 }}>
-          {stock.filter(s => Number(s.stock_quantity) <= Number(s.critical_threshold)).length} ürün kritik eşiğin altında
-        </p>
+    <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: t.accent, letterSpacing: '-1px' }}>Envanter Matrix</h1>
+          <p style={{ fontSize: '14px', color: t.textMuted, marginTop: '4px' }}>
+            {criticalCount > 0 
+              ? `${criticalCount} ürün kritik stok seviyesinin altında seyrediyor.` 
+              : 'Tüm stok kalemleri operasyonel limitler dahilinde.'}
+          </p>
+        </div>
+        <div style={{ 
+          padding: '10px 18px', 
+          background: t.surface, 
+          borderRadius: '12px', 
+          border: `1px solid ${t.border}`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <BarChart size={16} color={t.accentSecondary} />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: t.text }}>Stok Sağlık Skoru: %{Math.round(((stock.length - criticalCount) / stock.length) * 100)}</span>
+        </div>
       </div>
 
       <div style={{ 
         background: t.card, 
         border: `1px solid ${t.border}`, 
-        borderRadius: '12px', 
+        borderRadius: '24px', 
         overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        backdropFilter: 'blur(10px)'
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ background: t.navActive }}>
-              {['Ürün Adı', 'Miktar', 'Eşik', 'Birim', 'Doluluk', 'Durum'].map(h => (
-                <th key={h} style={{ 
-                  padding: '12px 16px', textAlign: 'left', fontSize: '11px', 
-                  fontWeight: '600', color: t.textMuted, textTransform: 'uppercase', 
-                  letterSpacing: '0.05em', borderBottom: `1px solid ${t.border}` 
+            <tr style={{ background: t.sidebar }}>
+              {[
+                { label: 'Envanter Kalemi', icon: Package },
+                { label: 'Mevcut', icon: null },
+                { label: 'Eşik', icon: null },
+                { label: 'Birim', icon: null },
+                { label: 'Sağlık İndeksi', icon: Info },
+                { label: 'Durum', icon: null }
+              ].map((h, i) => (
+                <th key={i} style={{ 
+                  padding: '16px 24px', 
+                  fontSize: '10px', 
+                  fontWeight: 800, 
+                  color: t.textMuted, 
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase'
                 }}>
-                  {h}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {h.icon && <h.icon size={12} />} {h.label}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -37,54 +88,69 @@ export default function Stock({ stock }) {
           <tbody>
             {stock.map((item, i) => {
               const isCritical = Number(item.stock_quantity) <= Number(item.critical_threshold);
-              const fillPercentage = Math.min((Number(item.stock_quantity) / (Number(item.critical_threshold) * 2.5)) * 100, 100);
+              const fillPercentage = Math.min((Number(item.stock_quantity) / (Number(item.critical_threshold) * 2)) * 100, 100);
 
               return (
-                <tr key={i} style={{ 
-                  borderBottom: i < stock.length - 1 ? `1px solid ${t.borderLight}` : 'none',
-                  transition: 'background 0.2s'
-                }}>
-                  <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '600', color: t.text }}>
-                    {item.name}
+                <tr 
+                  key={i} 
+                  style={{ 
+                    borderBottom: i < stock.length - 1 ? `1px solid ${t.borderLight}` : 'none',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = t.surface}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <td style={{ padding: '20px 24px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: t.text }}>{item.name}</div>
+                    <div style={{ fontSize: '11px', color: t.textMuted }}>SKU: {item.id || 'N/A'}</div>
                   </td>
-                  <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '700', color: isCritical ? t.danger : t.success }}>
+                  
+                  <td style={{ padding: '20px 24px', fontSize: '15px', fontWeight: 700, color: isCritical ? t.danger : t.text, fontFamily: 'Geist Mono, monospace' }}>
                     {item.stock_quantity}
                   </td>
-                  <td style={{ padding: '14px 16px', fontSize: '13px', color: t.textMuted }}>
+
+                  <td style={{ padding: '20px 24px', fontSize: '13px', color: t.textSecondary, fontFamily: 'Geist Mono, monospace' }}>
                     {item.critical_threshold}
                   </td>
-                  <td style={{ padding: '14px 16px', fontSize: '12px', color: t.textMuted }}>
+
+                  <td style={{ padding: '20px 24px', fontSize: '12px', color: t.textMuted, fontWeight: 500 }}>
                     {item.unit}
                   </td>
-                  <td style={{ padding: '14px 16px', width: '160px' }}>
-                    <div style={{ height: '6px', background: t.navActive, borderRadius: '3px', overflow: 'hidden' }}>
+
+                  <td style={{ padding: '20px 24px', width: '220px' }}>
+                    <div style={{ 
+                      height: '6px', 
+                      background: t.bg, 
+                      borderRadius: '10px', 
+                      overflow: 'hidden',
+                      border: `1px solid ${t.borderLight}`,
+                      width: '100%'
+                    }}>
                       <div style={{ 
                         height: '100%', 
-                        background: isCritical ? t.danger : t.success, 
                         width: `${fillPercentage}%`,
-                        transition: 'width 0.5s ease'
+                        background: isCritical ? `linear-gradient(90deg, ${t.danger}, #ff5f6d)` : `linear-gradient(90deg, ${t.success}, #00f2fe)`,
+                        borderRadius: '10px',
+                        transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
                       }} />
                     </div>
                   </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ 
-                      padding: '4px 10px', 
-                      borderRadius: '6px', 
-                      fontSize: '11px', 
-                      fontWeight: '700', 
-                      color: isCritical ? '#dc2626' : '#059669', 
-                      background: isCritical ? '#fef2f2' : '#f0fdf4', 
-                      border: `1px solid ${isCritical ? '#fee2e2' : '#d1fae5'}`,
-                      display: 'inline-block'
-                    }}>
-                      {isCritical ? 'KRİTİK' : 'NORMAL'}
-                    </span>
+
+                  <td style={{ padding: '20px 24px' }}>
+                    {getStatusBadge(isCritical)}
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        
+        {stock.length === 0 && (
+          <div style={{ padding: '80px', textAlign: 'center' }}>
+            <Boxes size={48} color={t.border} style={{ marginBottom: '16px' }} />
+            <div style={{ color: t.textMuted, fontSize: '14px' }}>Envanter verisi henüz yüklenmedi.</div>
+          </div>
+        )}
       </div>
     </div>
   );

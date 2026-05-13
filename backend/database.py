@@ -65,15 +65,34 @@ def get_delayed_cargo():
 
 # ── AI KARAR HAFIZASI ──
 
-def save_decision(description, action, approved=False, product_id=None):
-    """Ajanın aldığı stratejik kararları onay durumuyla birlikte kaydeder."""
-    data = {
-        "incident_type": description,
-        "proposed_action": action,
-        "is_approved": approved,
-        "related_product_id": product_id
-    }
-    return supabase.table("ai_decisions").insert(data).execute()
+def save_decision(description, action, approved=False, product_id=None, detail=None):
+    """Ajanın aldığı stratejik kararları ve AI tarafından hazırlanan taslağı kaydeder."""
+    try:
+        data = {
+            "incident_type": description,
+            "proposed_action": action,
+            "is_approved": approved,
+            "related_product_id": product_id,
+            "ai_description": detail if detail else "" 
+        }
+        
+        return supabase.table("ai_decisions").insert(data).execute()
+    except Exception as e:
+        print(f"Karar kaydetme hatası: {e}")
+        return None
+
+def get_past_decisions():
+    """Karar hafızasını kronolojik olarak getirir."""
+    try:
+        response = supabase.table("ai_decisions")\
+            .select("*")\
+            .order("created_at", desc=True)\
+            .limit(20)\
+            .execute()
+        return response.data
+    except Exception as e:
+        print(f"Karar hafızası hatası: {e}")
+        return []
 
 def get_past_decisions():
     """Karar hafızasını kronolojik olarak getirir."""

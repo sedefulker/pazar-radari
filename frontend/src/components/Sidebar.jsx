@@ -1,14 +1,33 @@
 import React from 'react';
 import { useTheme } from '../App';
+import { 
+  LayoutDashboard, Package, Boxes, BellRing, BrainCircuit, 
+  MessageSquare, Activity, Moon, Sun, Layers, ChevronRight, Command
+} from 'lucide-react';
 
-const navItems = [
-  { id: 'dashboard', label: 'Genel Bakış' },
-  { id: 'orders', label: 'Siparişler' },
-  { id: 'stock', label: 'Stok Yönetimi' },
-  { id: 'decisions', label: 'AI Karar Hafızası' },
-  { id: 'alerts', label: 'Sistem Uyarıları' },
-  { id: 'market', label: 'Dış Pazar Radarı' },
-  { id: 'chat', label: 'AI Danışman' },
+const NAV_GROUPS = [
+  {
+    label: 'Strateji',
+    items: [
+      { id: 'dashboard', label: 'Komuta Merkezi', icon: LayoutDashboard },
+      { id: 'market', label: 'Pazar İstihbaratı', icon: BrainCircuit },
+    ]
+  },
+  {
+    label: 'Operasyon',
+    items: [
+      { id: 'orders', label: 'Sipariş Akışı', icon: Package },
+      { id: 'stock', label: 'Envanter Matrix', icon: Boxes },
+      { id: 'decisions', label: 'Karar Kayıtları', icon: Activity },
+    ]
+  },
+  {
+    label: 'Yapay Zeka',
+    items: [
+      { id: 'alerts', label: 'AI Monitoring', icon: BellRing, badge: true },
+      { id: 'chat', label: 'Nexus AI', icon: MessageSquare },
+    ]
+  }
 ];
 
 export default function Sidebar({ page, setPage, alertCount }) {
@@ -16,77 +35,131 @@ export default function Sidebar({ page, setPage, alertCount }) {
 
   return (
     <aside style={{ 
-      width: '220px', 
+      width: '260px', 
       background: t.sidebar, 
-      borderRight: `1px solid ${t.border}`, 
-      position: 'fixed', 
+      borderRight: `1px solid ${t.border}`,
       height: '100vh', 
+      position: 'fixed', 
+      left: 0, 
+      top: 0, 
       display: 'flex', 
       flexDirection: 'column', 
+      padding: '24px 16px',
       zIndex: 100 
     }}>
-
-      <div style={{ padding: '24px 20px 20px', borderBottom: `1px solid ${t.borderLight}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ 
-            width: '30px', height: '30px', background: t.accent, 
-            borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' 
-          }}>
-            <span style={{ color: 'white', fontSize: '14px', fontWeight: '700' }}>P</span>
-          </div>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: t.text }}>Pazar Radarı</div>
-            <div style={{ fontSize: '10px', color: t.textMuted }}>Hatay Kadın Kooperatifi</div>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 8px', marginBottom: '40px' }}>
+        <div style={{ 
+          width: '32px', 
+          height: '32px', 
+          background: t.accent, 
+          borderRadius: '6px',
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center'
+        }}>
+          <Layers size={18} color={mode === 'dark' ? '#000' : '#FFF'} />
         </div>
+        <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.5px', color: t.text }}>PAZAR RADARI</span>
       </div>
 
-      <nav style={{ padding: '10px 8px', flex: 1 }}>
-        <div style={{ 
-          fontSize: '10px', fontWeight: '600', color: t.textMuted, 
-          textTransform: 'uppercase', letterSpacing: '0.08em', padding: '8px 10px 4px' 
-        }}>Yönetim</div>
-        
-        {navItems.map(({ id, label }) => (
-          <button 
-            key={id} 
-            onClick={() => setPage(id)} 
-            style={{ 
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-              width: '100%', padding: '10px 12px', borderRadius: '8px', border: 'none', 
-              background: page === id ? t.navActive : 'transparent', 
-              color: page === id ? t.text : t.textSecondary, 
-              cursor: 'pointer', fontSize: '13px', fontWeight: page === id ? '600' : '400', 
-              marginBottom: '4px', transition: 'all 0.2s' 
-            }}
-          >
-            <span>{label}</span>
-            {id === 'alerts' && alertCount > 0 && (
-              <span style={{ 
-                background: t.danger, color: 'white', borderRadius: '10px', 
-                padding: '1px 6px', fontSize: '10px', fontWeight: '700' 
-              }}>{alertCount}</span>
-            )}
-          </button>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {NAV_GROUPS.map((group, idx) => (
+          <div key={idx} style={{ marginBottom: '28px' }}>
+            <div style={{ 
+              fontSize: '11px', 
+              color: t.textMuted, 
+              fontWeight: 600, 
+              textTransform: 'uppercase', 
+              letterSpacing: '1px', 
+              padding: '0 12px 12px' 
+            }}>
+              {group.label}
+            </div>
+            {group.items.map(item => {
+              const active = page === item.id;
+              return (
+                <div 
+                  key={item.id}
+                  onClick={() => setPage(item.id)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '10px', 
+                    padding: '10px 12px',
+                    borderRadius: '8px', 
+                    cursor: 'pointer', 
+                    fontSize: '13.5px', 
+                    fontWeight: 500,
+                    marginBottom: '2px',
+                    transition: 'all 0.2s ease',
+                    background: active ? t.surface : 'transparent',
+                    border: `1px solid ${active ? t.border : 'transparent'}`,
+                    color: active ? t.accent : t.textMuted,
+                  }}
+                >
+                  <item.icon size={16} strokeWidth={active ? 2.5 : 2} />
+                  {item.label}
+                  {item.badge && alertCount > 0 && (
+                    <div style={{ 
+                      marginLeft: 'auto', 
+                      background: t.danger, 
+                      color: 'white', 
+                      fontSize: '10px', 
+                      padding: '1px 6px', 
+                      borderRadius: '4px', 
+                      fontWeight: 700 
+                    }}>{alertCount}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         ))}
-      </nav>
+      </div>
 
-      <div style={{ padding: '16px 12px', borderTop: `1px solid ${t.borderLight}` }}>
+      <div style={{ padding: '12px 0', borderTop: `1px solid ${t.border}` }}>
         <button 
-          onClick={() => setMode(mode === 'light' ? 'dark' : 'light')} 
+          onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
           style={{ 
-            width: '100%', padding: '8px 12px', borderRadius: '6px', 
-            border: `1px solid ${t.border}`, background: t.navActive, 
-            color: t.textSecondary, cursor: 'pointer', fontSize: '12px', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' 
+            width: '100%', 
+            background: t.surface, 
+            border: `1px solid ${t.border}`, 
+            color: t.text,
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: '10px', 
+            cursor: 'pointer', 
+            fontSize: '13px',
+            fontWeight: 600,
+            height: '40px',
+            borderRadius: '10px',
+            marginBottom: '16px'
           }}
         >
-          {mode === 'light' ? '🌙 Koyu Tema' : '☀️ Açık Tema'}
+          {mode === 'dark' ? <Sun size={14} /> : <Moon size={14} />} 
+          {mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
         </button>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '12px', paddingLeft: '4px' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: t.success }} />
-          <span style={{ fontSize: '11px', color: t.textMuted }}>Bulut Bağlantısı Aktif</span>
+
+        <div style={{ 
+          padding: '12px', 
+          borderRadius: '12px', 
+          background: t.surface, 
+          border: `1px solid ${t.border}`
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ 
+              width: '8px', 
+              height: '8px', 
+              borderRadius: '50%', 
+              background: t.success,
+              boxShadow: `0 0 10px ${t.success}`
+            }} />
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: t.text }}>Sistem Aktif</div>
+              <div style={{ fontSize: '10px', color: t.textMuted }}>Node: IST-01 Online</div>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
