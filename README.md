@@ -24,19 +24,6 @@ Sistem, mikrofonksiyonel bileşenlerin birbirleriyle asenkron olarak haberleşti
 
 ##  Öne Çıkan Özellik: Karar Hafızası (Caching)
 
-Yapay zeka bütçesini ve token tüketimini optimize etmek amacıyla sistem mimarisine bir **Karar Hafızası** entegre edilmiştir. Sistem bir risk algıladığında doğrudan Gemini API'ye istek atmak yerine, önce veritabanındaki geçmiş kararlar tablosunu tarar. Eğer ilgili ürün veya siparişle alakalı gün içinde zaten bir aksiyon planı üretilmişse, yapay zeka çağrısı tamamen bypass edilerek veri doğrudan bulut hafizasından getirilir. Bu optimizasyon sayesinde API harcamalarında **%90'a varan maliyet tasarrufu** sağlanmaktadır.
+Yapay zeka bütçesini ve token tüketimini optimize etmek amacıyla sistem mimarisine bir **Karar Hafızası** entegre edilmiştir. Sistem bir risk algıladığında doğrudan Gemini API'ye istek atmak yerine, önce veritabanındaki geçmiş kararlar tablosunu tarar. Eğer ilgili ürün veya siparişle alakalı gün içinde zaten bir aksiyon planı üretilmişse, yapay zeka çağrısı tamamen bypass edilerek veri doğrudan bulut hafizasından getirilir. Bu optimizasyon sayesinde API harcamalarında maliyet tasarrufu sağlanmaktadır.
 
-## 📁 Proje Dosya Yapısı
 
-```text
-pazar-radari/
-├── backend/
-│   ├── main.py          # API başlangıç noktası ve zamanlanmış görevlerin kuruluşu
-│   ├── agent.py         # Gemini API entegrasyonu ve karar mekanizmaları
-│   ├── database.py      # Supabase bağlantısı ve veri okuma/yazma katmanı
-│   ├── tools.py         # Yardımcı araçlar ve mesaj taslağı fonksiyonları
-│   └── .env             # Gizli API anahtarları ve veritabanı bağlantı bilgileri
-└── frontend/
-    ├── src/
-    │   ├── App.js       # SaaS paneli arayüzü ve tema yönetimi ana dosyası
-    │   └── ...          # Menüler ve ekran bileşenleri
