@@ -4,7 +4,7 @@ Pazar Radarı; kooperatiflerin ve KOBİ'lerin operasyonel süreçlerinde meydana
 
 Platform, verileri sadece ekranda listeleyen pasif panellerin aksine; riski kendisi algılayan, internete bağlanıp harici pazar araştırmasını yürüten ve yöneticiye anlık çözüm taslakları sunan proaktif bir mimariye sahiptir.
 
-## 🏗️ Sistem Mimarisi ve Veri Akışı
+##  Sistem Mimarisi ve Veri Akışı
 
 Sistem, mikrofonksiyonel bileşenlerin birbirleriyle asenkron olarak haberleştiği 4 temel katmandan oluşmaktadır:
 
@@ -13,7 +13,7 @@ Sistem, mikrofonksiyonel bileşenlerin birbirleriyle asenkron olarak haberleşti
 3. **Otonom Çözüm Üretimi (Gemini 2.5 Flash Lite):** Tetiklenen anomali türüne göre Gemini API çağrılır. İnsan müdahalesi olmadan tedarikçi için resmi bir e-posta taslağı veya müşteri için bilgilendirme metni hazırlanır. Ayrıca canlı internet araması yapılarak Türkiye e-ticaret pazarındaki güncel fiyat trendleri analiz edilir.
 4. **Haberleşme ve Sunum Katmanı (Telegram & React):** Üretilen stratejik kararlar Telegram Bot API üzerinden yöneticinin cep telefonuna anlık bildirim olarak iletilir ve eş zamanlı olarak React tabanlı yönetim paneline yansıtılır.
 
-## 🛠️ Teknolojik Altyapı (Tech Stack)
+##  Teknolojik Altyapı (Tech Stack)
 
 * **Backend:** FastAPI (Python), Uvicorn
 * **Frontend:** React.js (Plus Jakarta Sans tipografisi ve SaaS arayüz tasarımı)
@@ -22,7 +22,7 @@ Sistem, mikrofonksiyonel bileşenlerin birbirleriyle asenkron olarak haberleşti
 * **Görev Zamanlayıcı:** APScheduler (Arka plan rutin iş akışları)
 * **Anlık Bildirim Hattı:** Python Telegram Bot API
 
-## 💎 Öne Çıkan Özellik: Karar Hafızası (Caching)
+##  Öne Çıkan Özellik: Karar Hafızası (Caching)
 
 Yapay zeka bütçesini ve token tüketimini optimize etmek amacıyla sistem mimarisine bir **Karar Hafızası** entegre edilmiştir. Sistem bir risk algıladığında doğrudan Gemini API'ye istek atmak yerine, önce veritabanındaki geçmiş kararlar tablosunu tarar. Eğer ilgili ürün veya siparişle alakalı gün içinde zaten bir aksiyon planı üretilmişse, yapay zeka çağrısı tamamen bypass edilerek veri doğrudan bulut hafizasından getirilir. Bu optimizasyon sayesinde API harcamalarında **%90'a varan maliyet tasarrufu** sağlanmaktadır.
 
